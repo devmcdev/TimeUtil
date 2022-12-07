@@ -38,9 +38,6 @@
     [Parameter, EditorRequired]
     public OutlookCalendar Calendar { get; set; } = default!;
 
-    private static readonly DialogOptions dialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, DisableBackdropClick = true };
-
-
     private OutlookCalendar? _calendar;
     private string? _filterString;
     private EventsTableData events = null!;
@@ -94,7 +91,7 @@
 
     private void CalcEventsList()
     {
-        events = new(Calendar.FilterEvents(_selectedCategories, _monthRange?.StartMonth, _monthRange?.EndMonth, FilterString).OrderBy(static x => x.FullStartDateTime));
+        events = new(Calendar.FilterEvents(_selectedCategories, _monthRange?.StartMonth, _monthRange?.EndMonth, FilterString).OrderBy(static x => x.FullStartDateTime).ThenBy(static x => x.StartTime));
     }
 
     private async Task ExportCalendar()
@@ -102,7 +99,7 @@
         isExporting = true;
         try
         {
-            var dialogRef = Dialog.Show<ExportFileNameDialog>("", dialogOptions);
+            var dialogRef = Dialog.Show<ExportFileNameDialog>("");
 
             var res = await dialogRef.Result;
 
