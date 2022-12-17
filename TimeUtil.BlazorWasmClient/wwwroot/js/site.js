@@ -47,7 +47,7 @@ function parseCSVAsync(file) {
             complete: (result) => resolve(result),
             header: true,
             skipEmptyLines: true,
-            error: (error) => reject(error)
+            error: (error) => reject(error),
         };
         Papa.parse(file, csvParseOptions);
     });
@@ -62,6 +62,7 @@ function parseEvents(data) {
             "Start Time": x["Start Time"],
             "End Time": x["End Time"],
             categories: categoiresConverter(x.Categories),
+            "All day event": parseAllDayBool(x["All day event"])
         };
     })
 }
@@ -71,4 +72,15 @@ function categoiresConverter(sourceCategorie) {
         return ["Uncategorised"];
     }
     return sourceCategorie.split(';');
+}
+
+function parseAllDayBool(allDayString) {
+    if (!allDayString) {
+        return false;
+    }
+    if (allDayString === "true") {
+
+        return true;
+    }
+    return false;
 }

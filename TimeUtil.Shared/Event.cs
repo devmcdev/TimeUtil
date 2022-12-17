@@ -26,6 +26,9 @@ public class Event
     [JsonInclude, JsonPropertyName(name: "Categories")]
     public IEnumerable<string> Categories { get; private set; } = Enumerable.Empty<string>();
 
+    [JsonInclude, JsonPropertyName(name: "All day event")]
+    public bool AllDayEvent { get; private set; }
+
     private TimeSpan? _Eventduration;
 
     [JsonIgnore]

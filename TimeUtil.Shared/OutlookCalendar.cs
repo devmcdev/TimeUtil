@@ -68,14 +68,14 @@
             return timeUtilPercentage;
         }
 
-        public IEnumerable<Event> FilterEvents(IEnumerable<string> categories)
-        {
-            return FilterEvents(categories, null, null);
-        }
-
-        public IEnumerable<Event> FilterEvents(IEnumerable<string>? categories = null, DateOnly? startDate = null, DateOnly? endDate = null, string? eventSubject = null)
+        public IEnumerable<Event> FilterEvents(IEnumerable<string>? categories = null, DateOnly? startDate = null, DateOnly? endDate = null, string? eventSubject = null, bool removeAllDayEvents = false)
         {
             IEnumerable<Event> local = categories is null ? _events : FilterEventsByCategories(categories);
+
+            if (removeAllDayEvents)
+            {
+                local = local.Where(e => !e.AllDayEvent);
+            }
 
             if (!string.IsNullOrWhiteSpace(eventSubject))
             {

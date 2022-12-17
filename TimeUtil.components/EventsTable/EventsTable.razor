@@ -2,7 +2,6 @@
 @using TimeUtil.Shared.Interfaces
 
 @inject IDialogService DialogService
-@inject IOutlookCalendarCSVParseService Parser
 
 <MudSimpleTable Hover="true" Striped="true" Dense="true" Elevation="0" Outlined="true">
     <thead>
@@ -18,6 +17,9 @@
             </th>
             <th>
                 Event Duration
+            </th>
+            <th>
+                All Day
             </th>
             <th>
                 Event Categories
@@ -40,6 +42,9 @@
                 </td>
                 <td>
                     @row.Eventduration
+                </td>
+                <td>
+                    @row.AllDayEvent
                 </td>
                 <td>
                     <ul>
