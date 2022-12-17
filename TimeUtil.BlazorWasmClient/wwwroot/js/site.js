@@ -78,7 +78,7 @@ function parseAllDayBool(allDayString) {
     if (!allDayString) {
         return false;
     }
-    if (allDayString === "true") {
+    if (allDayString.toLowerCase() === "true") {
 
         return true;
     }
