@@ -6,20 +6,47 @@
 <MudSimpleTable Hover="true" Striped="true" Dense="true" Elevation="0" Outlined="true">
     <thead>
         <tr>
-            <th>
-                Event Subject
+            <th @onclick="()=>SetEventsOrder(sortByEventSubject)">
+                <span class="mud-button-root mud-table-sort-label ">
+                    Event Subject
+                    <MudIcon Class="@($"mud-icon-root mud-svg-icon mud-icon-size-medium mud-table-sort-label-icon {SortArrow(sortByEventSubject)}")"
+                             Icon="@Icons.Filled.ArrowUpward"
+                             aria-hidden="true" focusable="false" />
+                </span>
             </th>
-            <th>
-                Start Date
+            <th @onclick="()=>SetEventsOrder(sortByFullStartDateTime)">
+
+                <span class="mud-button-root mud-table-sort-label ">
+                    Start Date
+                    <MudIcon Class="@($"mud-icon-root mud-svg-icon mud-icon-size-medium mud-table-sort-label-icon {SortArrow(sortByFullStartDateTime)}")"
+                             Icon="@Icons.Filled.ArrowUpward"
+                             aria-hidden="true" focusable="false" />
+                </span>
             </th>
-            <th>
-                End Date
+            <th @onclick="()=>SetEventsOrder(sortByFullEndDateTime)">
+
+                <span class="mud-button-root mud-table-sort-label">
+                    End Date
+                    <MudIcon Class="@($"mud-icon-root mud-svg-icon mud-icon-size-medium mud-table-sort-label-icon {SortArrow(sortByFullEndDateTime)}")"
+                             Icon="@Icons.Filled.ArrowUpward"
+                             aria-hidden="true" focusable="false" />
+                </span>
             </th>
-            <th>
-                Event Duration
+            <th @onclick="()=>SetEventsOrder(sortByEventDuration)">
+                <span class="mud-button-root mud-table-sort-label ">
+                    Event Duration
+                    <MudIcon Class="@($"mud-icon-root mud-svg-icon mud-icon-size-medium mud-table-sort-label-icon {SortArrow(sortByEventDuration)}")"
+                             Icon="@Icons.Filled.ArrowUpward"
+                             aria-hidden="true" focusable="false" />
+                </span>
             </th>
-            <th>
-                All Day
+            <th @onclick="()=>SetEventsOrder(sortByAllDayEvent)">
+                <span class="mud-button-root mud-table-sort-label">
+                    All Day
+                    <MudIcon Class="@($"mud-icon-root mud-svg-icon mud-icon-size-medium mud-table-sort-label-icon {SortArrow(sortByAllDayEvent)}")"
+                             Icon="@Icons.Filled.ArrowUpward"
+                             aria-hidden="true" focusable="false" />
+                </span>
             </th>
             <th>
                 Event Categories
@@ -28,7 +55,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var row in _events)
+        @foreach (var row in _pageofEvents)
         {
             <tr @key="row">
                 <td>
@@ -74,10 +101,10 @@
             </MudSelect>
             <div style="text-align:center;">
                 <StyledText HtmlTag="span" Typo="Typo.body1">
-                    @LowerBoundItem - @UpBoundItem of @Events.Events.Count
+                    @LowerBoundItem - @UpBoundItem of @_internalEvents.Length
                 </StyledText>
             </div>
-            <MudPagination @bind-Selected="CurrentPage" Count="_numberOfPages" BoundaryCount="0" Class="pa-4"  MiddleCount="0" />
+            <MudPagination @bind-Selected="CurrentPage" Count="_numberOfPages" BoundaryCount="0" Class="pa-4" MiddleCount="0" />
         </MudStack>
     </MudHidden>
     <MudHidden Invert="true" Breakpoint="Breakpoint.SmAndDown">
@@ -92,11 +119,11 @@
             </MudItem>
             <MudItem xs="12" sm="6" Style="text-align:center;">
                 <StyledText HtmlTag="span" Typo="Typo.body1">
-                    @LowerBoundItem - @UpBoundItem of @Events.Events.Count
+                    @LowerBoundItem - @UpBoundItem of @_internalEvents.Length
                 </StyledText>
             </MudItem>
             <MudItem Class="align-end" xs="12">
-                <MudPagination @bind-Selected="CurrentPage" Count="_numberOfPages" BoundaryCount="0" Class="pa-4"  MiddleCount="0" />
+                <MudPagination @bind-Selected="CurrentPage" Count="_numberOfPages" BoundaryCount="0" Class="pa-4" MiddleCount="0" />
             </MudItem>
         </MudGrid>
     </MudHidden>
@@ -108,10 +135,20 @@
     [Parameter, EditorRequired] public EventsTableData Events { get; set; } = default!;
     [Parameter, EditorRequired] public IEnumerable<string> Categories { get; set; } = default!;
 
-    private Event[] _events = default!;
+    private Event[] _internalEvents = Array.Empty<Event>();
+    private Event[] _pageofEvents = Array.Empty<Event>();
     private static readonly int[] pageSizeOptions = new[] { 20, 40, 60, 80, 100 };
     private int _pageSize = pageSizeOptions[0];
     private int _numberOfPages;
+
+    private static readonly Func<Event, object> sortByEventSubject = e => e.EventSubject!;
+    private static readonly Func<Event, object> sortByFullStartDateTime = e => e.FullStartDateTime;
+    private static readonly Func<Event, object> sortByFullEndDateTime = e => e.FullEndDateTime;
+    private static readonly Func<Event, object> sortByEventDuration = e => e.Eventduration;
+    private static readonly Func<Event, object> sortByAllDayEvent = e => e.AllDayEvent;
+
+    private Func<Event, object> _currentSort = sortByFullStartDateTime;
+    private SortDirection _currentSortDirection = SortDirection.Ascending;
 
     private int _currentPage = 1;
 
@@ -122,7 +159,7 @@
         {
             _pageSize = value;
             _numberOfPages = GetNumberOfPages();
-            _events = GetPageOfEvents();
+            _pageofEvents = GetPageOfEvents();
         }
     }
 
@@ -132,27 +169,81 @@
         set
         {
             _currentPage = value;
-            _events = GetPageOfEvents();
+            _pageofEvents = GetPageOfEvents();
         }
     }
 
     private int LowerBoundItem => ((_currentPage - 1) * _pageSize) + 1;
-    private int UpBoundItem => _events.Length < _pageSize ? Events.Events.Count : _events.Length * _currentPage;
+    private int UpBoundItem => _pageofEvents.Length < _pageSize ? _internalEvents.Length : _pageofEvents.Length * _currentPage;
 
     protected override void OnParametersSet()
     {
-        _events = GetPageOfEvents();
+        OrderEvents();
+        _pageofEvents = GetPageOfEvents();
         _numberOfPages = GetNumberOfPages();
     }
 
     private int GetNumberOfPages()
     {
-        return (int)Math.Ceiling((double)Events.Events.Count / _pageSize);
+        return (int)Math.Ceiling((double)_internalEvents.Length / _pageSize);
     }
 
     private Event[] GetPageOfEvents()
     {
-        return Events.Events.Skip((_currentPage - 1) * _pageSize).Take(_pageSize).ToArray();
+        return _internalEvents.Skip((_currentPage - 1) * _pageSize).Take(_pageSize).ToArray();
+    }
+
+    private void SetEventsOrder(Func<Event, object> func)
+    {
+        SetSort(func);
+        OrderEvents();
+        _pageofEvents = GetPageOfEvents();
+    }
+
+    private void SetSort(Func<Event, object> func)
+    {
+        if (_currentSort == func)
+        {
+            _currentSortDirection = InvertSortDirection(_currentSortDirection);
+        }
+        else
+        {
+            _currentSortDirection = SortDirection.Ascending;
+            _currentSort = func;
+        }
+    }
+
+    private void OrderEvents()
+    {
+        _internalEvents = Events.Events.OrderByDirection(_currentSortDirection, _currentSort).ToArray();
+    }
+
+    private SortDirection InvertSortDirection(SortDirection sortDirection)
+    {
+        if (sortDirection == SortDirection.Ascending)
+        {
+            return SortDirection.Descending;
+        }
+        else
+        {
+            return SortDirection.Ascending;
+        }
+    }
+
+    private string? SortArrow(Func<Event, object> func)
+    {
+        if (_currentSort != func)
+        {
+            return null;
+        }
+        else if (_currentSortDirection == SortDirection.Ascending)
+        {
+            return "mud-direction-asc";
+        }
+        else
+        {
+            return "mud-direction-desc";
+        }
     }
 
     private async Task OpenEditDialog(Event eventToUpdate)

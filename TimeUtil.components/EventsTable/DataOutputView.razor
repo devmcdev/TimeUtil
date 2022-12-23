@@ -118,9 +118,7 @@
     {
         bool hideAllDayEvents = DayState == AllDayState.Hide;
 
-        IEnumerable<Event> filteredEvents = Calendar.FilterEvents(_selectedCategories, _monthRange?.StartMonth, _monthRange?.EndMonth, FilterString, hideAllDayEvents)
-        .OrderBy(static x => x.FullStartDateTime)
-        .ThenBy(static x => x.StartTime);
+        IEnumerable<Event> filteredEvents = Calendar.FilterEvents(_selectedCategories, _monthRange?.StartMonth, _monthRange?.EndMonth, FilterString, hideAllDayEvents);
 
         if (DayState == AllDayState.Only)
         {
