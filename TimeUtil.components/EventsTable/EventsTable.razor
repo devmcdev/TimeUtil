@@ -6,6 +6,9 @@
 <MudSimpleTable Hover="true" Striped="true" Dense="true" Elevation="0" Outlined="true">
     <thead>
         <tr>
+            <th>
+                <MudCheckBox Size="Size.Small" Dense @bind-Checked:get="_selectAll" @bind-Checked:set="OnSelectedAllChanged" />
+            </th>
             <th @onclick="()=>SetEventsOrder(sortByEventSubject)">
                 <span class="mud-button-root mud-table-sort-label ">
                     Event Subject
@@ -59,6 +62,9 @@
         {
             <tr @key="row">
                 <td>
+                    <MudCheckBox T="bool" Dense Size="Size.Small" @bind-Checked:get="SelectedEvents.Contains(row)" @bind-Checked:set="value => OnSelectedChanged(row,value)" />
+                </td>
+                <td>
                     @row.EventSubject
                 </td>
                 <td>
@@ -75,11 +81,18 @@
                 </td>
                 <td>
                     <ul>
-                        @foreach (string category in row.Categories)
+                        @if (row.IsUncategorised)
                         {
-                            <li @key="category">
-                                @category
-                            </li>
+                            <li @key="@("Uncategorised")">Uncategorised</li>
+                        }
+                        else
+                        {
+                            @foreach (string category in row.Categories)
+                            {
+                                <li @key="category">
+                                    @category
+                                </li>
+                            }
                         }
                     </ul>
                 </td>
@@ -93,7 +106,7 @@
 <MudBreakpointProvider>
     <MudHidden Invert="true" Breakpoint="Breakpoint.MdAndUp">
         <MudStack Row="true" Class="mt-3 align-center" Style="width:fit-content; margin-left:auto;" Spacing="3">
-            <MudSelect T="int" Label="Rows per page" FullWidth="false" @bind-Value="PageSize">
+            <MudSelect T="int" Label="Rows per page" FullWidth="false" @bind-Value:get="_pageSize" @bind-Value:set="PageSizeChangedAsync">
                 @foreach (int option in pageSizeOptions)
                 {
                     <MudSelectItem Value="@option" />
@@ -104,13 +117,13 @@
                     @LowerBoundItem - @UpBoundItem of @_internalEvents.Length
                 </StyledText>
             </div>
-            <MudPagination @bind-Selected="CurrentPage" Count="_numberOfPages" BoundaryCount="0" Class="pa-4" MiddleCount="0" />
+            <MudPagination @bind-Selected:get="_currentPage" @bind-Selected:set="CurrentPageChangedAsync" Count="_numberOfPages" BoundaryCount="0" Class="pa-4" MiddleCount="0" />
         </MudStack>
     </MudHidden>
     <MudHidden Invert="true" Breakpoint="Breakpoint.SmAndDown">
         <MudGrid Class="align-center mt-1" Justify="Justify.FlexEnd">
             <MudItem xs="12" sm="6">
-                <MudSelect T="int" Label="Rows per page" FullWidth="false" @bind-Value="PageSize">
+                <MudSelect T="int" Label="Rows per page" FullWidth="false" @bind-Value:get="_pageSize" @bind-Value:set="PageSizeChangedAsync">
                     @foreach (int option in pageSizeOptions)
                     {
                         <MudSelectItem Value="@option" />
@@ -123,7 +136,7 @@
                 </StyledText>
             </MudItem>
             <MudItem Class="align-end" xs="12">
-                <MudPagination @bind-Selected="CurrentPage" Count="_numberOfPages" BoundaryCount="0" Class="pa-4" MiddleCount="0" />
+                <MudPagination @bind-Selected:get="_currentPage" @bind-Selected:set="CurrentPageChangedAsync" Count="_numberOfPages" BoundaryCount="0" Class="pa-4" MiddleCount="0" />
             </MudItem>
         </MudGrid>
     </MudHidden>
@@ -134,12 +147,16 @@
 @code {
     [Parameter, EditorRequired] public EventsTableData Events { get; set; } = default!;
     [Parameter, EditorRequired] public IEnumerable<string> Categories { get; set; } = default!;
+    [Parameter] public IReadOnlySet<Event> SelectedEvents { get; set; } = default!;
+    [Parameter] public EventCallback<IReadOnlySet<Event>> SelectedEventsChanged { get; set; }
 
     private Event[] _internalEvents = Array.Empty<Event>();
     private Event[] _pageofEvents = Array.Empty<Event>();
     private static readonly int[] pageSizeOptions = new[] { 20, 40, 60, 80, 100 };
     private int _pageSize = pageSizeOptions[0];
     private int _numberOfPages;
+    private bool _selectAll;
+    private HashSet<Event> _selectedEvents = new HashSet<Event>();
 
     private static readonly Func<Event, object> sortByEventSubject = e => e.EventSubject!;
     private static readonly Func<Event, object> sortByFullStartDateTime = e => e.FullStartDateTime;
@@ -152,35 +169,33 @@
 
     private int _currentPage = 1;
 
-    private int PageSize
-    {
-        get => _pageSize;
-        set
-        {
-            _pageSize = value;
-            _numberOfPages = GetNumberOfPages();
-            _pageofEvents = GetPageOfEvents();
-        }
-    }
-
-    private int CurrentPage
-    {
-        get => _currentPage;
-        set
-        {
-            _currentPage = value;
-            _pageofEvents = GetPageOfEvents();
-        }
-    }
-
     private int LowerBoundItem => ((_currentPage - 1) * _pageSize) + 1;
     private int UpBoundItem => _pageofEvents.Length < _pageSize ? _internalEvents.Length : _pageofEvents.Length * _currentPage;
 
     protected override void OnParametersSet()
     {
+        ThrowHelpers.ThrowIfRequiredPrameterNull(SelectedEvents);
+
         OrderEvents();
         _pageofEvents = GetPageOfEvents();
         _numberOfPages = GetNumberOfPages();
+    }
+
+    private Task PageSizeChangedAsync(int pageSize)
+    {
+        _pageSize = pageSize;
+        _numberOfPages = GetNumberOfPages();
+        _pageofEvents = GetPageOfEvents();
+
+        return OnSelectedAllChanged(false);
+    }
+
+    private Task CurrentPageChangedAsync(int currentPage)
+    {
+        _currentPage = currentPage;
+        _pageofEvents = GetPageOfEvents();
+
+        return OnSelectedAllChanged(false);
     }
 
     private int GetNumberOfPages()
@@ -246,6 +261,31 @@
         }
     }
 
+    private Task OnSelectedChanged(Event @event, bool selected)
+    {
+        HashSet<Event> events = new(SelectedEvents);
+
+        if (selected)
+        {
+            events.Add(@event);
+        }
+        else
+        {
+            events.Remove(@event);
+        }
+
+        return SelectedEventsChanged.InvokeAsync(events);
+    }
+
+    private Task OnSelectedAllChanged(bool selected)
+    {
+        _selectAll = selected;
+
+        HashSet<Event> events = selected ? new(_pageofEvents) : new();
+
+        return SelectedEventsChanged.InvokeAsync(events);
+    }
+
     private async Task OpenEditDialog(Event eventToUpdate)
     {
 
@@ -261,7 +301,7 @@
 
         if (res.TryGetSuccessfulResult(out IEnumerable<string>? categories))
         {
-            eventToUpdate.UpdateEvent(categories.ToArray());
+            //eventToUpdate.UpdateEvent(categories.ToArray());
         }
     }
 }

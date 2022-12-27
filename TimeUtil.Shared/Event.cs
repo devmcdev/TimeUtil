@@ -4,30 +4,26 @@ namespace TimeUtil.Shared;
 
 public class Event
 {
-    public event Action<EventUpdateArgs>? OnEventUpdated;
-
-    private static readonly string[] placeHolderCategory = { "Uncategorised" };
-
     [JsonInclude, JsonPropertyName(name: "Subject")]
-    public string? EventSubject { get; private set; }
+    public string? EventSubject { get; init; }
 
     [JsonInclude, JsonPropertyName(name: "Start Date")]
-    public DateOnly StartDate { get; private set; }
+    public DateOnly StartDate { get; init; }
 
     [JsonInclude, JsonPropertyName(name: "End Date")]
-    public DateOnly EndDate { get; private set; }
+    public DateOnly EndDate { get; init; }
 
     [JsonInclude, JsonPropertyName(name: "Start Time")]
-    public TimeOnly StartTime { get; private set; }
+    public TimeOnly StartTime { get; init; }
 
     [JsonInclude, JsonPropertyName(name: "End Time")]
-    public TimeOnly EndTime { get; private set; }
+    public TimeOnly EndTime { get; init; }
 
     [JsonInclude, JsonPropertyName(name: "Categories")]
-    public IEnumerable<string> Categories { get; private set; } = Enumerable.Empty<string>();
+    public string[] Categories { get; init; } = Array.Empty<string>();
 
     [JsonInclude, JsonPropertyName(name: "All day event")]
-    public bool AllDayEvent { get; private set; }
+    public bool AllDayEvent { get; init; }
 
     private TimeSpan? _Eventduration;
 
@@ -47,39 +43,24 @@ public class Event
     }
     private DateTime? _fullStartDateTime;
     private DateTime? _fullEndDateTime;
-    [JsonIgnore]
 
+    [JsonIgnore]
     public DateTime FullStartDateTime => _fullStartDateTime ??= StartDate.ToDateTime(StartTime);
     [JsonIgnore]
     public DateTime FullEndDateTime => _fullEndDateTime ??= EndDate.ToDateTime(EndTime);
 
-    public void UpdateEvent(string[] categories)
+    [JsonIgnore]
+    private bool? _isUncategorised;
+    [JsonIgnore]
+    public bool IsUncategorised
     {
-        if (categories.Length < 1)
+        get
         {
-            categories = placeHolderCategory;
+            if (!_isUncategorised.HasValue)
+            {
+                _isUncategorised = !Categories.Any();
+            }
+            return _isUncategorised.Value;
         }
-
-        var addedCategories = categories.Except(Categories).ToArray();
-        var removedCategories = Categories.Except(categories).ToArray();
-
-        Categories = categories;
-
-        EventUpdateArgs args = new(this, addedCategories, removedCategories);
-        OnEventUpdated?.Invoke(args);
     }
-}
-
-public class EventUpdateArgs
-{
-    public EventUpdateArgs(Event sender, string[] addedCategories, string[] removedCategories)
-    {
-        Sender = sender;
-        AddedCategories = addedCategories;
-        RemovedCategories = removedCategories;
-    }
-
-    public Event Sender { get; }
-    public string[] AddedCategories { get; }
-    public string[] RemovedCategories { get; }
 }

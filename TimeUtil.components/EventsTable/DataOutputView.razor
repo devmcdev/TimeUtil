@@ -18,16 +18,19 @@
     <MudStack Spacing="5">
         <MudButton Style="width:fit-content;" Disabled="isExporting" Size="Size.Small" Variant="Variant.Filled" Color="Color.Info" OnClick="ExportCalendar" StartIcon="@Icons.Filled.Download" Class="mt-2">Export all Events</MudButton>
         <MudGrid Spacing="2">
-            <MudItem xs="12" sm="6" lg="4">
+            <MudItem xs="12" sm="12" lg="3">
                 <MudTextField @bind-Value="@FilterString" Placeholder="Search Event Subject" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Clearable="true" />
             </MudItem>
-            <MudItem xs="12" sm="6" lg="3">
+            <MudItem xs="12" sm="6" lg="2">
                 <CategoryMultiSelect @bind-SelectedCategories="SelectedCategories" Categories="Calendar.Categories" TextFunc="TextHelpers.GetMultiSelectionText" />
+            </MudItem>
+            <MudItem xs="12" sm="6" lg="2" Class="d-flex align-self-end">
+                <MudCheckBox Color="Color.Primary" @bind-Checked="IncludeUncategorised" Label="Show Uncategorised Events" />
             </MudItem>
             <MudItem xs="12" sm="9" lg="3">
                 <MonthRangePicker StartDate="@Calendar.FirstEventDate" EndDate="@Calendar.LastEventDate" @bind-MonthRange="@MonthRange" />
             </MudItem>
-            <MudItem Class="align-self-end" xs="12" sm="3" lg="2">
+            <MudItem xs="12" sm="3" lg="2">
                 <MudSelect @bind-Value="DayState" T="AllDayState">
                     <MudSelectItem Value="AllDayState.Show">Show all day events</MudSelectItem>
                     <MudSelectItem Value="AllDayState.Hide">Hide all day events</MudSelectItem>
@@ -36,7 +39,7 @@
             </MudItem>
         </MudGrid>
         <div class="mt-1">
-            <EventsTable Events="events" Categories="@Calendar.Categories" />
+            <EventsTable Events="events" Categories="@Calendar.Categories" @bind-SelectedEvents="_selectedEvents" />
         </div>
     </MudStack>
 </MudPaper>
@@ -52,12 +55,23 @@
     private MonthRange? _monthRange;
     private bool isExporting;
     private AllDayState _allDayState;
+    private bool _includeUncategorised = true;
+    private IReadOnlySet<Event> _selectedEvents = new HashSet<Event>();
 
     private enum AllDayState
     {
         Show,
         Hide,
         Only
+    }
+
+    private bool IncludeUncategorised {
+        get => _includeUncategorised;
+        set
+        {
+            _includeUncategorised = value;
+            CalcEventsList();
+        } 
     }
 
     private AllDayState DayState
@@ -106,7 +120,7 @@
 
         if (Calendar != _calendar)
         {
-            _selectedCategories = Calendar.Categories;
+            _selectedCategories = Calendar.Categories.ToList();
             _calendar = Calendar;
             _monthRange = null;
         }
@@ -118,7 +132,7 @@
     {
         bool hideAllDayEvents = DayState == AllDayState.Hide;
 
-        IEnumerable<Event> filteredEvents = Calendar.FilterEvents(_selectedCategories, _monthRange?.StartMonth, _monthRange?.EndMonth, FilterString, hideAllDayEvents);
+        IEnumerable<Event> filteredEvents = Calendar.FilterEvents(_selectedCategories, IncludeUncategorised, _monthRange?.StartMonth, _monthRange?.EndMonth, FilterString, hideAllDayEvents);
 
         if (DayState == AllDayState.Only)
         {

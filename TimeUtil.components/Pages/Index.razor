@@ -67,7 +67,6 @@
                 await using Stream stream = input.File.OpenReadStream(input.File.Size);
                 using StreamContent streamContent = new(stream);
                 cal = await Parser.ParseOutlookCalendar(await streamContent.ReadAsStreamAsync());
-                cal.OnUpdated += OnCalendarUpdated;
             }
             catch (Exception e)
             {
@@ -83,11 +82,6 @@
         }
     }
 
-    private void OnCalendarUpdated()
-    {
-        _ = InvokeAsync(StateHasChanged); 
-    }
-
     private void Reset()
     {
         CleanCalendar();
@@ -98,8 +92,6 @@
     {
         if (cal is not null)
         {
-            cal.OnUpdated -= OnCalendarUpdated;
-            cal.Dispose();
             cal = null;
         }
     }

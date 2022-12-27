@@ -1,9 +1,10 @@
 ﻿namespace TimeUtil.Shared
 {
-    public class OutlookCalendar : IDisposable
+    public class OutlookCalendar
     {
         private readonly Event[] _events;
         private readonly Dictionary<string, HashSet<Event>> _eventLookup;
+        private readonly List<Event> _uncategorisedEvents = new();
         private string[]? _categories;
         private DateTime? _firstEventDate;
         private DateTime? _lastEventDate;
@@ -12,15 +13,9 @@
         {
             _events = events.ToArray();
 
-            foreach (var @event in _events)
-            {
-                @event.OnEventUpdated += HandleEventUpdate;
-            }
-
             _eventLookup = PopulateEventLookup();
+            _uncategorisedEvents.AddRange(events.Where(e => e.IsUncategorised).ToList());
         }
-
-        public event Action? OnUpdated;
 
         public IReadOnlyCollection<Event> Events => _events;
         public string[] Categories => _categories ??= _events.SelectMany(e => e.Categories).Distinct().ToArray();
@@ -68,9 +63,9 @@
             return timeUtilPercentage;
         }
 
-        public IEnumerable<Event> FilterEvents(IEnumerable<string>? categories = null, DateOnly? startDate = null, DateOnly? endDate = null, string? eventSubject = null, bool removeAllDayEvents = false)
+        public IEnumerable<Event> FilterEvents(IEnumerable<string>? categories = null, bool includeUncategorised = true, DateOnly? startDate = null, DateOnly? endDate = null, string? eventSubject = null, bool removeAllDayEvents = false)
         {
-            IEnumerable<Event> local = categories is null ? _events : FilterEventsByCategories(categories);
+            IEnumerable<Event> local = categories is null ? _events : FilterEventsByCategories(categories, includeUncategorised);
 
             if (removeAllDayEvents)
             {
@@ -95,7 +90,7 @@
             return local;
         }
 
-        private IEnumerable<Event> FilterEventsByCategories(IEnumerable<string> categories)
+        private IEnumerable<Event> FilterEventsByCategories(IEnumerable<string> categories, bool includeUncategorised)
         {
             List<Event> events = new();
 
@@ -107,32 +102,12 @@
                 }
             }
 
+            if (includeUncategorised)
+            {
+                events.AddRange(_uncategorisedEvents);
+            }
+
             return events.Distinct();
-        }
-
-        private void HandleEventUpdate(EventUpdateArgs args)
-        {
-            foreach (string key in args.RemovedCategories)
-            {
-                _eventLookup[key].Remove(args.Sender);
-            }
-
-            foreach (string key in args.AddedCategories)
-            {
-                _eventLookup[key].Add(args.Sender);
-            }
-
-            OnUpdated?.Invoke();
-        }
-
-        public void Dispose()
-        {
-            foreach (var @event in _events)
-            {
-                @event.OnEventUpdated -= HandleEventUpdate;
-            }
-
-            GC.SuppressFinalize(this);
         }
     }
 }

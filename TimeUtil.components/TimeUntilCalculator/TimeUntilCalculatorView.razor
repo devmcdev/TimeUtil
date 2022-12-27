@@ -78,7 +78,7 @@
 
     private void CalcEventsList()
     {
-        _events = Calendar.FilterEvents(_selectedCategories, _monthRange?.StartMonth, _monthRange?.EndMonth).ToArray();
+        _events = Calendar.FilterEvents(_selectedCategories, false, _monthRange?.StartMonth, _monthRange?.EndMonth).ToArray();
     }
 
     private int GetNumMonths()

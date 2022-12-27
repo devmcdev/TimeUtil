@@ -69,7 +69,7 @@ function parseEvents(data) {
 
 function categoiresConverter(sourceCategorie) {
     if (!sourceCategorie) {
-        return ["Uncategorised"];
+        return [];
     }
     return sourceCategorie.split(';');
 }

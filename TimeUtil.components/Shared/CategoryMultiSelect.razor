@@ -21,7 +21,6 @@
     [Parameter] public string? SelectAllText { get; set; } = "Select all";
     [Parameter] public Func<IEnumerable<string>?, string>? TextFunc { get; set; }
 
-
     private string GetSelectionText()
     {
         if (TextFunc is null)
