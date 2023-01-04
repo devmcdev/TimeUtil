@@ -6,6 +6,7 @@
 
 @inject ISnackbar Snackbar
 @inject IOutlookCalendarCSVParseService Parser
+@inject IDialogService DialogService
 
 @implements IDisposable
 
@@ -44,7 +45,7 @@
                     <TimeUntilCalculatorView Calendar="cal" />
                 </MudPaper>
                 <div>
-                    <DataOutputView Calendar="@cal" />
+                    <DataOutputView EditEvent="OpenEditDialog" EditManyEvents="OpenEditiManyEventsDialog" Calendar="@cal" @bind-SelectedEvents="SelectedEvents" />
                 </div>
             </MudStack>
         }
@@ -55,6 +56,23 @@
     private OutlookCalendar? cal;
     private bool processing;
     private IBrowserFile? _file;
+    private HashSet<Event> _selectedEvents = new();
+
+    private IReadOnlySet<Event> SelectedEvents
+    {
+        get => _selectedEvents;
+        set
+        {
+            if (value is HashSet<Event> eventHashSet)
+            {
+                _selectedEvents = eventHashSet;
+            }
+            else
+            {
+                _selectedEvents = new(value);
+            }
+        }
+    }
 
     private async Task HandleSubmit(InputFormSubmitArgs input)
     {
@@ -95,6 +113,62 @@
             cal = null;
         }
     }
+
+    private async Task OpenEditDialog(Event eventToUpdate)
+    {
+        DialogParameters parameters = new()
+        {
+            { nameof(EditEventDialog.Event), eventToUpdate },
+            { nameof(EditEventDialog.Categories), cal?.Categories }
+        };
+
+        var reference = DialogService.Show<EditEventDialog>("Simple Dialog", parameters);
+
+        var res = await reference.Result;
+
+        if (res.TryGetSuccessfulResult(out IEnumerable<string>? categories))
+        {
+            EventUpdate eventUpdate = new(eventToUpdate, categories.ToArray());
+            cal?.UpdateEvent(eventUpdate);
+        }
+    }
+
+    private async Task OpenEditiManyEventsDialog()
+    {
+        DialogParameters parameters = new()
+        {
+            { nameof(EditManyEventsDialog.Events), SelectedEvents },
+            { nameof(EditManyEventsDialog.Categories), cal?.Categories }
+        };
+
+        var reference = DialogService.Show<EditManyEventsDialog>("Simple Dialog", parameters);
+
+        var res = await reference.Result;
+
+        if (res.TryGetSuccessfulResult(out MultiEditResult? result))
+        {
+            EventUpdate[] eventUpdates = new EventUpdate[SelectedEvents.Count];
+
+            int index = 0;
+            foreach (Event @event in SelectedEvents)
+            {
+                HashSet<string> newCates = new(@event.Categories.Except(result.CategoiesToRemove));
+
+                foreach (string category in result.CategoiesToAdd)
+                {
+                    newCates.Add(category);
+                }
+
+                EventUpdate eventUpdate = new(@event, newCates.ToArray());
+                eventUpdates[index] = eventUpdate;
+
+                index++;
+            }
+
+            cal?.UpdateManyEvents(eventUpdates);
+        }
+    }
+
 
     public void Dispose()
     {

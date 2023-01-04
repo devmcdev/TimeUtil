@@ -90,6 +90,73 @@
             return local;
         }
 
+        public void UpdateEvent(EventUpdate eventUpdate)
+        {
+            // remove first
+            RemoveOldRefsToEvent(eventUpdate);
+
+            Event newEvent = CreateAndSaveNewEvent(eventUpdate);
+
+            AddEventToLocalCaches(newEvent);
+
+
+            void RemoveOldRefsToEvent(EventUpdate eventUpdate)
+            {
+                if (eventUpdate.Event.IsUncategorised)
+                {
+                    _uncategorisedEvents.Remove(eventUpdate.Event);
+                }
+                else
+                {
+                    foreach (string category in eventUpdate.Event.Categories)
+                    {
+                        _eventLookup[category].Remove(eventUpdate.Event);
+                    }
+                }
+            }
+
+            Event CreateAndSaveNewEvent(EventUpdate eventUpdate)
+            {
+                // then create new event and add it to array
+                Event newEvent = new()
+                {
+                    EventSubject = eventUpdate.Event.EventSubject,
+                    AllDayEvent = eventUpdate.Event.AllDayEvent,
+                    EndDate = eventUpdate.Event.EndDate,
+                    StartDate = eventUpdate.Event.StartDate,
+                    EndTime = eventUpdate.Event.EndTime,
+                    StartTime = eventUpdate.Event.StartTime,
+                    Categories = eventUpdate.NewCategories
+                };
+                _events[Array.IndexOf(_events, eventUpdate.Event)] = newEvent;
+                return newEvent;
+            }
+
+            void AddEventToLocalCaches(Event newEvent)
+            {
+                // then add event to category look up
+                if (newEvent.IsUncategorised)
+                {
+                    _uncategorisedEvents.Add(newEvent);
+                }
+                else
+                {
+                    foreach (string category in newEvent.Categories)
+                    {
+                        _eventLookup[category].Add(newEvent);
+                    }
+                }
+            }
+        }
+
+        public void UpdateManyEvents(EventUpdate[] eventUpdates)
+        {
+            foreach (var eventUpdate in eventUpdates)
+            {
+                UpdateEvent(eventUpdate);
+            }
+        }
+
         private IEnumerable<Event> FilterEventsByCategories(IEnumerable<string> categories, bool includeUncategorised)
         {
             List<Event> events = new();

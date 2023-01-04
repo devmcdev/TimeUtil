@@ -16,7 +16,10 @@
     </div>
 
     <MudStack Spacing="5">
-        <MudButton Style="width:fit-content;" Disabled="isExporting" Size="Size.Small" Variant="Variant.Filled" Color="Color.Info" OnClick="ExportCalendar" StartIcon="@Icons.Filled.Download" Class="mt-2">Export all Events</MudButton>
+        <div>
+            <MudButton Style="width:fit-content;" Disabled="isExporting" Size="Size.Small" Variant="Variant.Filled" Color="Color.Info" OnClick="ExportCalendar" StartIcon="@Icons.Filled.Download" Class="mt-2">Export all Events</MudButton>
+            <MudButton Style="width:fit-content;" Disabled="SelectedEvents.Count < 1" Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary" OnClick="OnEditManyClicked" StartIcon="@Icons.Filled.Edit" Class="mt-2">Edit selected Events</MudButton>
+        </div>
         <MudGrid Spacing="2">
             <MudItem xs="12" sm="12" lg="3">
                 <MudTextField @bind-Value="@FilterString" Placeholder="Search Event Subject" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Clearable="true" />
@@ -39,7 +42,11 @@
             </MudItem>
         </MudGrid>
         <div class="mt-1">
-            <EventsTable Events="events" Categories="@Calendar.Categories" @bind-SelectedEvents="_selectedEvents" />
+            <EventsTable Events="events"
+                         EditEvent="OnEditEvent"
+                         Categories="@Calendar.Categories"
+                         @bind-SelectedEvents:get="SelectedEvents"
+                         @bind-SelectedEvents:set="SelectedEventsChanged" />
         </div>
     </MudStack>
 </MudPaper>
@@ -47,6 +54,14 @@
 @code {
     [Parameter, EditorRequired]
     public OutlookCalendar Calendar { get; set; } = default!;
+    [Parameter]
+    public EventCallback<Event> EditEvent { get; set; }
+    [Parameter]
+    public EventCallback EditManyEvents { get; set; }
+    [Parameter]
+    public IReadOnlySet<Event> SelectedEvents { get; set; } = default!;
+    [Parameter]
+    public EventCallback<IReadOnlySet<Event>> SelectedEventsChanged { get; set; }
 
     private OutlookCalendar? _calendar;
     private string? _filterString;
@@ -56,7 +71,6 @@
     private bool isExporting;
     private AllDayState _allDayState;
     private bool _includeUncategorised = true;
-    private IReadOnlySet<Event> _selectedEvents = new HashSet<Event>();
 
     private enum AllDayState
     {
@@ -65,13 +79,14 @@
         Only
     }
 
-    private bool IncludeUncategorised {
+    private bool IncludeUncategorised
+    {
         get => _includeUncategorised;
         set
         {
             _includeUncategorised = value;
             CalcEventsList();
-        } 
+        }
     }
 
     private AllDayState DayState
@@ -114,8 +129,25 @@
         }
     }
 
+    //private IReadOnlySet<Event> SelectedEvents
+    //{
+    //    get => _selectedEvents;
+    //    set
+    //    {
+    //        if (value is HashSet<Event> eventHashSet)
+    //        {
+    //            _selectedEvents = eventHashSet;
+    //        }
+    //        else
+    //        {
+    //            _selectedEvents = new(value);
+    //        }
+    //    }
+    //}
+
     protected override void OnParametersSet()
     {
+        ThrowHelpers.ThrowIfRequiredPrameterNull(SelectedEvents);
         ThrowHelpers.ThrowIfRequiredPrameterNull(Calendar);
 
         if (Calendar != _calendar)
@@ -174,5 +206,13 @@
         Dialog.Show<EventsTableHelpDialog>("Help");
     }
 
+    private async Task OnEditManyClicked()
+    {
+        await EditManyEvents.InvokeAsync();
+    }
 
+    private async Task OnEditEvent(Event @event)
+    {
+        await EditEvent.InvokeAsync(@event);
+    }
 }

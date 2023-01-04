@@ -1,0 +1,42 @@
+﻿@using TimeUtil.Shared
+
+<MudDialog>
+    <TitleContent>
+        <StyledText HtmlTag="h1" Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Filled.Edit" Class="mr-3 mb-n1" />
+            @($"Edit {Events.Count} Event{(Events.Count > 1 ? "s" : "")}")
+        </StyledText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Row="true" Justify="Justify.SpaceBetween">
+            <CategoryMultiSelect HelpText="Categories to Add to all selected events" Categories="@Categories" @bind-SelectedCategories="@categoriesToAdd" />
+            <CategoryMultiSelect HelpText="Categories to remove to all selected events" Categories="@Categories" @bind-SelectedCategories="@categoriesToRemove" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public IReadOnlyCollection<Event> Events { get; set; } = default!;
+    [Parameter] public IReadOnlyCollection<string> Categories { get; set; } = default!;
+
+    private IEnumerable<string> categoriesToAdd = Enumerable.Empty<string>();
+    private IEnumerable<string> categoriesToRemove = Enumerable.Empty<string>();
+
+    protected override void OnParametersSet()
+    {
+        ThrowHelpers.ThrowIfRequiredPrameterNull(Events);
+        ThrowHelpers.ThrowIfRequiredPrameterNull(Categories);
+    }
+
+    private void Submit()
+    {
+        MultiEditResult multiEditResult = new(categoriesToAdd, categoriesToRemove);
+        MudDialog.Close(DialogResult.Ok(multiEditResult));
+    }  
+    private void Cancel() => MudDialog.Cancel();
+}
