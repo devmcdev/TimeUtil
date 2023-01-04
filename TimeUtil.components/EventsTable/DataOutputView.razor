@@ -12,13 +12,13 @@
         <StyledText HtmlTag="h1" Typo="Typo.h6">
             Edit Events
         </StyledText>
-        <MudIconButton Size="@Size.Small" Icon="@Icons.Filled.Help" Title="Help for Time utilisation calcultor" OnClick="@OpenHelpDialog" />
+        <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Filled.Help" Title="Help for Time utilisation calcultor" OnClick="@OpenHelpDialog" />
     </div>
 
     <MudStack Spacing="5">
         <div>
-            <MudButton Style="width:fit-content;" Disabled="isExporting" Size="Size.Small" Variant="Variant.Filled" Color="Color.Info" OnClick="ExportCalendar" StartIcon="@Icons.Filled.Download" Class="mt-2">Export all Events</MudButton>
-            <MudButton Style="width:fit-content;" Disabled="SelectedEvents.Count < 1" Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary" OnClick="OnEditManyClicked" StartIcon="@Icons.Filled.Edit" Class="mt-2">Edit selected Events</MudButton>
+            <MudButton Style="width:fit-content;" Disabled="isExporting" Size="Size.Small" Variant="Variant.Filled" Color="Color.Info" OnClick="ExportCalendar" StartIcon="@Icons.Material.Filled.Download" Class="mt-2">Export all Events</MudButton>
+            <MudButton Style="width:fit-content;" Disabled="SelectedEvents.Count < 1" Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary" OnClick="OnEditManyClicked" StartIcon="@Icons.Material.Filled.Edit" Class="mt-2">Edit selected Events</MudButton>
         </div>
         <MudGrid Spacing="2">
             <MudItem xs="12" sm="12" lg="3">
@@ -128,22 +128,6 @@
             CalcEventsList();
         }
     }
-
-    //private IReadOnlySet<Event> SelectedEvents
-    //{
-    //    get => _selectedEvents;
-    //    set
-    //    {
-    //        if (value is HashSet<Event> eventHashSet)
-    //        {
-    //            _selectedEvents = eventHashSet;
-    //        }
-    //        else
-    //        {
-    //            _selectedEvents = new(value);
-    //        }
-    //    }
-    //}
 
     protected override void OnParametersSet()
     {

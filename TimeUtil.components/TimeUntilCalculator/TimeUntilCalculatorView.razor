@@ -5,7 +5,7 @@
     <StyledText HtmlTag="h1" Typo="Typo.h6">
         Time Utilisation Calculator
     </StyledText>
-    <MudIconButton Size="@Size.Small" Icon="@Icons.Filled.Help" Title="Help for Time utilisation calcultor" OnClick="@OpenHelpDialog" />
+    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Filled.Help" Title="Help for Time utilisation calcultor" OnClick="@OpenHelpDialog" />
 </div>
 
 <MudGrid Spacing="2">
@@ -19,7 +19,7 @@
         <MudNumericField @bind-Value="TargetHours" Label="Target Hours per month" Format="F2" Variant="Variant.Text" Min="0" />
     </MudItem>
     <MudItem xs="12" sm="6" lg="2">
-        <MudField Adornment="Adornment.End" AdornmentIcon="@Icons.Filled.Percent" Label="Time Utilisation">@Math.Round(OutlookCalendar.TimeUtilisationPercentage(_targetHours * GetNumMonths(), _events), 2)</MudField>
+        <MudField Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Percent" Label="Time Utilisation">@Math.Round(OutlookCalendar.TimeUtilisationPercentage(_targetHours * GetNumMonths(), _events), 2)</MudField>
     </MudItem>
 </MudGrid>
 

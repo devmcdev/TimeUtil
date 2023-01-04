@@ -5,13 +5,13 @@
     <thead>
         <tr>
             <th>
-                <MudCheckBox Size="Size.Small" Dense @bind-Checked:get="_selectAll" @bind-Checked:set="OnSelectedAllChanged" />
+                <MudCheckBox Size="Size.Small" Dense @bind-Checked:get="AllSelect" @bind-Checked:set="OnSelectedAllChanged" />
             </th>
             <th @onclick="()=>SetEventsOrder(sortByEventSubject)">
                 <span class="mud-button-root mud-table-sort-label ">
                     Event Subject
                     <MudIcon Class="@($"mud-icon-root mud-svg-icon mud-icon-size-medium mud-table-sort-label-icon {SortArrow(sortByEventSubject)}")"
-                             Icon="@Icons.Filled.ArrowUpward"
+                             Icon="@Icons.Material.Filled.ArrowUpward"
                              aria-hidden="true" focusable="false" />
                 </span>
             </th>
@@ -20,7 +20,7 @@
                 <span class="mud-button-root mud-table-sort-label ">
                     Start Date
                     <MudIcon Class="@($"mud-icon-root mud-svg-icon mud-icon-size-medium mud-table-sort-label-icon {SortArrow(sortByFullStartDateTime)}")"
-                             Icon="@Icons.Filled.ArrowUpward"
+                             Icon="@Icons.Material.Filled.ArrowUpward"
                              aria-hidden="true" focusable="false" />
                 </span>
             </th>
@@ -29,7 +29,7 @@
                 <span class="mud-button-root mud-table-sort-label">
                     End Date
                     <MudIcon Class="@($"mud-icon-root mud-svg-icon mud-icon-size-medium mud-table-sort-label-icon {SortArrow(sortByFullEndDateTime)}")"
-                             Icon="@Icons.Filled.ArrowUpward"
+                             Icon="@Icons.Material.Filled.ArrowUpward"
                              aria-hidden="true" focusable="false" />
                 </span>
             </th>
@@ -37,7 +37,7 @@
                 <span class="mud-button-root mud-table-sort-label ">
                     Event Duration
                     <MudIcon Class="@($"mud-icon-root mud-svg-icon mud-icon-size-medium mud-table-sort-label-icon {SortArrow(sortByEventDuration)}")"
-                             Icon="@Icons.Filled.ArrowUpward"
+                             Icon="@Icons.Material.Filled.ArrowUpward"
                              aria-hidden="true" focusable="false" />
                 </span>
             </th>
@@ -45,7 +45,7 @@
                 <span class="mud-button-root mud-table-sort-label">
                     All Day
                     <MudIcon Class="@($"mud-icon-root mud-svg-icon mud-icon-size-medium mud-table-sort-label-icon {SortArrow(sortByAllDayEvent)}")"
-                             Icon="@Icons.Filled.ArrowUpward"
+                             Icon="@Icons.Material.Filled.ArrowUpward"
                              aria-hidden="true" focusable="false" />
                 </span>
             </th>
@@ -95,7 +95,7 @@
                     </ul>
                 </td>
                 <td>
-                    <MudIconButton Icon="@Icons.Filled.Edit" aria-label="edit" Size="@Size.Small" OnClick="() => EditEvent.InvokeAsync(row)" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" aria-label="edit" Size="@Size.Small" OnClick="() => EditEvent.InvokeAsync(row)" />
                 </td>
             </tr>
         }
@@ -166,7 +166,7 @@
     private SortDirection _currentSortDirection = SortDirection.Ascending;
 
     private int _currentPage = 1;
-    private bool _selectAll => SelectedEvents.Count == _pageofEvents.Length;
+    private bool AllSelect => SelectedEvents.Count == _pageofEvents.Length;
 
     private int LowerBoundItem => ((_currentPage - 1) * _pageSize) + 1;
     private int UpBoundItem => _pageofEvents.Length < _pageSize ? _internalEvents.Length : _pageofEvents.Length * _currentPage;

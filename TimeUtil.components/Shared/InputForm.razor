@@ -9,7 +9,7 @@
             <MudButton HtmlTag="label"
                    Variant="Variant.Filled"
                    Color="Color.Secondary"
-                   StartIcon="@Icons.Filled.CloudUpload"
+                   StartIcon="@Icons.Material.Filled.CloudUpload"
                    Size="Size.Small"
                    Class="ml-2"
                    for="fileInput">
@@ -21,7 +21,7 @@
             <text>You have uploaded a file called: <strong>@file.Name</strong></text>
             <MudButton Variant="Variant.Filled"
                    Color="Color.Error"
-                   StartIcon="@Icons.Filled.DeleteForever"
+                   StartIcon="@Icons.Material.Filled.DeleteForever"
                    Class="ml-2"
                    Size="Size.Small"
                    OnClick="RemoveFile">
@@ -31,7 +31,7 @@
             <MudButton Variant="Variant.Filled"
                    Size="Size.Small"
                    Color="Color.Primary" Disabled="@(!formValid)"
-                   StartIcon="@Icons.Filled.Calculate"
+                   StartIcon="@Icons.Material.Filled.Calculate"
                    Class="ml-2" OnClick="HandleSubmit">Process</MudButton>
         }
     </StyledText>

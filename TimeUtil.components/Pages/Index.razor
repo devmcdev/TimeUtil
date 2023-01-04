@@ -23,7 +23,7 @@
                     File: <strong>@_file!.Name</strong> is currently being displayed
                     <MudButton Variant="Variant.Filled"
                            Color="Color.Info"
-                           StartIcon="@Icons.Filled.RestartAlt"
+                           StartIcon="@Icons.Material.Filled.RestartAlt"
                            Class="ml-2"
                            Size="Size.Small"
                            OnClick="Reset">
@@ -166,8 +166,9 @@
             }
 
             cal?.UpdateManyEvents(eventUpdates);
-            // remove old events after new edited ones are created to replace the ones edited.
-            // If not remove out of bonds exception and memory link possible
+
+            // Remove old events after new edited ones are created to replace the ones edited.
+            // If not remove out of bonds exception and memory link possible.
             _selectedEvents.Clear();
         }
     }
