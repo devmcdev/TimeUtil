@@ -18,7 +18,7 @@
     <MudStack Spacing="5">
         <div>
             <MudButton Style="width:fit-content;" Disabled="isExporting" Size="Size.Small" Variant="Variant.Filled" Color="Color.Info" OnClick="ExportCalendar" StartIcon="@Icons.Material.Filled.Download" Class="mt-2">Export all Events</MudButton>
-            <MudButton Style="width:fit-content;" Disabled="SelectedEvents.Count < 1" Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary" OnClick="OnEditManyClicked" StartIcon="@Icons.Material.Filled.Edit" Class="mt-2">Edit selected Events</MudButton>
+            <MudButton Style="width:fit-content;" Disabled="SelectedEvents.Count < 1" Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary" OnClick="OpenEditiManyEventsDialog" StartIcon="@Icons.Material.Filled.Edit" Class="mt-2">Edit selected Events</MudButton>
         </div>
         <MudGrid Spacing="2">
             <MudItem xs="12" sm="12" lg="3">
@@ -43,10 +43,9 @@
         </MudGrid>
         <div class="mt-1">
             <EventsTable Events="events"
-                         EditEvent="OnEditEvent"
+                         EditEvent="OpenEditDialog"
                          Categories="@Calendar.Categories"
-                         @bind-SelectedEvents:get="SelectedEvents"
-                         @bind-SelectedEvents:set="SelectedEventsChanged" />
+                         @bind-SelectedEvents="SelectedEvents" />
         </div>
     </MudStack>
 </MudPaper>
@@ -55,13 +54,7 @@
     [Parameter, EditorRequired]
     public OutlookCalendar Calendar { get; set; } = default!;
     [Parameter]
-    public EventCallback<Event> EditEvent { get; set; }
-    [Parameter]
-    public EventCallback EditManyEvents { get; set; }
-    [Parameter]
-    public IReadOnlySet<Event> SelectedEvents { get; set; } = default!;
-    [Parameter]
-    public EventCallback<IReadOnlySet<Event>> SelectedEventsChanged { get; set; }
+    public Action? OnCalendarUpdated { get; set; }
 
     private OutlookCalendar? _calendar;
     private string? _filterString;
@@ -71,6 +64,23 @@
     private bool isExporting;
     private AllDayState _allDayState;
     private bool _includeUncategorised = true;
+    private HashSet<Event> _selectedEvents = new();
+
+    private IReadOnlySet<Event> SelectedEvents
+    {
+        get => _selectedEvents;
+        set
+        {
+            if (value is HashSet<Event> eventHashSet)
+            {
+                _selectedEvents = eventHashSet;
+            }
+            else
+            {
+                _selectedEvents = new(value);
+            }
+        }
+    }
 
     private enum AllDayState
     {
@@ -156,6 +166,8 @@
         }
 
         events = new(filteredEvents);
+
+        _selectedEvents.Clear();
     }
 
     private async Task ExportCalendar()
@@ -190,13 +202,65 @@
         Dialog.Show<EventsTableHelpDialog>("Help");
     }
 
-    private async Task OnEditManyClicked()
+    private async Task OpenEditDialog(Event eventToUpdate)
     {
-        await EditManyEvents.InvokeAsync();
+        DialogParameters parameters = new()
+        {
+            { nameof(EditEventDialog.Event), eventToUpdate },
+            { nameof(EditEventDialog.Categories), _calendar?.Categories }
+        };
+
+        var reference = Dialog.Show<EditEventDialog>("Simple Dialog", parameters);
+
+        var res = await reference.Result;
+
+        if (res.TryGetSuccessfulResult(out IEnumerable<string>? categories))
+        {
+            EventUpdate eventUpdate = new(eventToUpdate, categories.ToArray());
+            _calendar?.UpdateEvent(eventUpdate);
+            OnCalendarUpdated?.Invoke();
+        }
     }
 
-    private async Task OnEditEvent(Event @event)
+    private async Task OpenEditiManyEventsDialog()
     {
-        await EditEvent.InvokeAsync(@event);
+        DialogParameters parameters = new()
+        {
+            { nameof(EditManyEventsDialog.Events), SelectedEvents },
+            { nameof(EditManyEventsDialog.Categories), _calendar?.Categories }
+        };
+
+        var reference = Dialog.Show<EditManyEventsDialog>("Simple Dialog", parameters);
+
+        var res = await reference.Result;
+
+        if (res.TryGetSuccessfulResult(out MultiEditResult? result))
+        {
+            EventUpdate[] eventUpdates = new EventUpdate[SelectedEvents.Count];
+
+            int index = 0;
+            foreach (Event @event in SelectedEvents)
+            {
+                HashSet<string> newCates = new(@event.Categories.Except(result.CategoiesToRemove));
+
+                foreach (string category in result.CategoiesToAdd)
+                {
+                    newCates.Add(category);
+                }
+
+                EventUpdate eventUpdate = new(@event, newCates.ToArray());
+                eventUpdates[index] = eventUpdate;
+
+                index++;
+            }
+
+            _calendar?.UpdateManyEvents(eventUpdates);
+
+            // Remove old events after new edited ones are created to replace the ones edited.
+            // If not remove out of bonds exception and memory link possible.
+            _selectedEvents.Clear();
+
+            OnCalendarUpdated?.Invoke();
+        }
     }
 }
