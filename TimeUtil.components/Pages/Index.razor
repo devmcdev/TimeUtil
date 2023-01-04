@@ -166,6 +166,9 @@
             }
 
             cal?.UpdateManyEvents(eventUpdates);
+            // remove old events after new edited ones are created to replace the ones edited.
+            // If not remove out of bonds exception and memory link possible
+            _selectedEvents.Clear();
         }
     }
 
